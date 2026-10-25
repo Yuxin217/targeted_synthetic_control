@@ -1,0 +1,8 @@
+{
+  "outcome": "continuous",
+  "panel": {},
+  "estimator": {"ridge_alpha": 5.0, "n_folds": 5, "n_validation_periods": 6, "history_window": 10, "history_representation": "full", "binary_model": "ridge"},
+  "horizons": [1, 5, 10],
+  "seeds": [7000, 7001, 7002, 7003, 7004, 7005, 7006, 7007, 7008, 7009, 7010, 7011],
+  "dgps": {"linear": {}, "hinge": {}, "quadratic": {}, "time_varying": {}}
+}
