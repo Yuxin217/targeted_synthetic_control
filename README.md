@@ -41,19 +41,21 @@ for example:
 
 ```bash
 OUTPUT=results/runs/binary_smoke bash runnables/run_binary.sh \
-  --dgp linear --seeds 15000 --horizons 1
+  --dgp linear --seeds 16000 --horizons 1
 ```
 
 Arguments that are not given (`--dgp`, `--seeds`, `--horizons`) are taken from
 the configuration file. In all settings, SCM uses the full pre-treatment
 history, and the shrinkage `alpha` is selected on pre-treatment pseudo-post
 periods, except for binary Quadratic, which fixes `alpha = 1`. The binary DGPs
-use DGP-specific nuisance settings and seeds, as listed in
+use the same top-level seed list and DGP-specific nuisance settings from
 `configs/binary.json`.
 
 Each run writes `details.csv`, `diagnostics.csv`, `weights.csv`, the generated
 panels, and a `manifest.json`. Saved results in `results/` are never
-overwritten.
+overwritten. Raw experiment CSV files retain the seed as a matching key. Table
+and figure summaries infer the available seeds directly from these files and
+do not display seed values in their published output.
 
 ## External panels
 

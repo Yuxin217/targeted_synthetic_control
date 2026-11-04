@@ -41,10 +41,13 @@ def main():
         parser.error('DGP not in config')
     args.output.mkdir(parents=True, exist_ok=False)
     panel_cfg = PanelConfig(**cfg['panel'])
-    jobs = [(d, s) for d in dgps for s in (args.seeds or cfg['dgps'][d].get('seeds', cfg['seeds']))] if args.experiment == 'synthetic' else [('external', None)]
+    simulation_seeds = args.seeds or cfg['seeds']
+    jobs = ([(d, replicate, seed) for d in dgps
+             for replicate, seed in enumerate(simulation_seeds, start=1)]
+            if args.experiment == 'synthetic' else [('external', 1, None)])
     rows, diagnostics, weights = [], [], []
     with threadpool_limits(limits=1):
-        for dgp, seed in jobs:
+        for dgp, replicate, seed in jobs:
             overrides = cfg['dgps'].get(dgp, {})
             options = {**cfg['estimator'], **overrides.get('estimator', {})}
             if options.get('binary_model') != 'ridge':
@@ -57,7 +60,7 @@ def main():
             else:
                 frame = pd.read_csv(args.input, dtype={'abb': str})
                 cutoff = args.first_post
-            panel_path = args.output/f'{dgp}_{seed}_panel.csv'
+            panel_path = args.output/f'{dgp}_replicate_{replicate:03d}_panel.csv'
             frame.to_csv(panel_path, index=False)
             for h in horizons:
                 target = cutoff+h-1
@@ -76,13 +79,16 @@ def main():
                 donors = sorted(frame.loc[(frame['T']==target)&(frame.A==0), 'abb'].astype(str))
                 for donor, initial, final in zip(donors, fit.w0, fit.w_star):
                     weights.append({**key, 'donor': donor, 'w0': initial, 'w_star': final})
-            print(f'Completed {dgp}, seed={seed}, horizons={horizons}', flush=True)
+            print(f'Completed {dgp}, replicate={replicate}, horizons={horizons}', flush=True)
     pd.DataFrame(rows).to_csv(args.output/'details.csv', index=False)
     pd.DataFrame(diagnostics).to_csv(args.output/'diagnostics.csv', index=False)
     pd.DataFrame(weights).to_csv(args.output/'weights.csv', index=False)
-    manifest = dict(config=cfg, experiment=args.experiment, jobs=jobs, horizons=horizons,
+    manifest_config = {key: value for key, value in cfg.items() if key != 'seeds'}
+    manifest_config['replicates'] = len(simulation_seeds) if args.experiment == 'synthetic' else 1
+    public_jobs = [dict(dgp=dgp, replicate=replicate) for dgp, replicate, _ in jobs]
+    manifest = dict(config=manifest_config, experiment=args.experiment, jobs=public_jobs, horizons=horizons,
                     metric='Realized untreated squared error; missing for real data without counterfactual truth',
-                    threads=1, selection='All methods evaluated on identical supplied seeds',
+                    threads=1, selection='All methods evaluated on identical replicates',
                     input_sha256=hashlib.sha256(args.input.read_bytes()).hexdigest() if args.input else None)
     (args.output/'manifest.json').write_text(json.dumps(manifest, indent=2))
     print(args.output)

@@ -1,4 +1,4 @@
-"""Create the paper's tabular layout from saved realized-outcome errors."""
+"""Create paper tables using every matched seed present in the input results."""
 import argparse
 from pathlib import Path
 
@@ -16,13 +16,16 @@ def summarize(frame):
         frame = frame[frame.estimand == 'realized']
     if frame.empty or frame.squared_error.isna().any():
         raise ValueError('Realized squared errors are required')
-    keys = ['dgp','horizon','method','seed']
+    sample_column = 'replicate' if 'replicate' in frame else 'seed'
+    if sample_column not in frame:
+        raise ValueError('A replicate identifier is required')
+    keys = ['dgp','horizon','method',sample_column]
     if frame.duplicated(keys).any():
         raise ValueError('Duplicate cells; filter stage/outcome/settings before aggregation')
     for key, group in frame.groupby(['dgp','horizon']):
-        samples = [set(group.loc[group.method == m, 'seed']) for m in METHODS]
+        samples = [set(group.loc[group.method == m, sample_column]) for m in METHODS]
         if any(s != samples[0] for s in samples[1:]) or not samples[0]:
-            raise ValueError(f'Methods must share evaluation seeds for {key}')
+            raise ValueError(f'Methods must share evaluation replicates for {key}')
     out = frame.groupby(['dgp','horizon','method']).squared_error.agg(MSE='mean', std='std', n='count').reset_index()
     out['RMSE'] = np.sqrt(out.MSE)
     out['RMSE_SE'] = out['std']/np.sqrt(out.n)/(2*out.RMSE)

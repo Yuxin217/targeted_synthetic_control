@@ -6,15 +6,13 @@
   "seeds": [16000, 16001, 16002, 16003, 16004, 16005, 16006, 16007, 16008, 16009, 16010, 16011],
   "dgps": {
     "linear": {
-      "seeds": [16000, 16001, 16002, 16003, 16004, 16005, 16006, 16007, 16008, 16009, 16010, 16011],
       "estimator": {"ridge_alpha": 20.0}
     },
     "hinge": {},
     "quadratic": {
-      "seeds": [16000, 16001, 16002, 16003, 16004, 16005, 16006, 16007, 16008, 16009, 16010, 16011],
       "estimator": {"history_representation": "full", "alpha_grid": [1.0]}
     },
     "time_varying": {}
   },
-  "note": "Per-DGP seeds override the top-level seeds. Quadratic fixes alpha = 1."
+  "note": "Quadratic fixes alpha = 1."
 }
